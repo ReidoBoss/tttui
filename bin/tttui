@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+else
+  echo "Error: Python is not installed." >&2
+  echo "Please install Python 3 to run tttui." >&2
+  exit 1
+fi
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+
+PROJECT_ROOT=$(dirname "$SCRIPT_DIR")
+
+package.
+
+export PYTHONPATH="$PROJECT_ROOT"
+"$PYTHON_CMD" -m tttui
