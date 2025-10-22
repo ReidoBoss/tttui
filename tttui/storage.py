@@ -1,5 +1,49 @@
 import os
+import json
 from . import config
+
+CONFIG_DIR = os.path.expanduser("~/.config/tttui")
+CONFIG_FILE = os.path.join(CONFIG_DIR, "config.json")
+DEFAULT_CONFIG = {
+    "user_preferences": {
+        "language": "english",
+        "theme": "default",
+    },
+    "personal_bests": {},
+}
+
+
+def _ensure_config_file():
+    """Ensure the config directory and file exist."""
+    os.makedirs(CONFIG_DIR, exist_ok=True)
+    if not os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(DEFAULT_CONFIG, f, indent=2)
+
+
+def load_config():
+    """Load the user's configuration from the JSON file."""
+    _ensure_config_file()
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            loaded_config = json.load(f)
+            config = DEFAULT_CONFIG.copy()
+            config.update(loaded_config)
+            return config
+    except (json.JSONDecodeError, IOError):
+        return DEFAULT_CONFIG
+
+
+def save_config(config_data):
+    """Save the user's configuration to the JSON file."""
+    _ensure_config_file()
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config_data, f, indent=2)
+
+
+def get_pb(all_pbs, test_key):
+    """Get the personal best for a specific test key."""
+    return all_pbs.get(test_key)
 
 
 def ensure_dirs():
@@ -11,7 +55,7 @@ def ensure_dirs():
 def get_available_languages():
     """Dynamically find available language files."""
     if not os.path.exists(config.LANGUAGES_DIR):
-        return ["english"]  # Default
+        return ["english"]
     return [
         f.replace(".txt", "")
         for f in os.listdir(config.LANGUAGES_DIR)
@@ -29,27 +73,3 @@ def load_items(item_type, language):
         return items if items else [f"No {item_type} found for {language}"]
     except FileNotFoundError:
         return [f"No {item_type} file for {language}"]
-
-
-def add_item(item_type, language, item):
-    """Add a word or quote to the appropriate file."""
-    dir_path = config.LANGUAGES_DIR if item_type == "words" else config.QUOTES_DIR
-    file_path = os.path.join(dir_path, f"{language}.txt")
-    with open(file_path, "a", encoding="utf-8") as f:
-        f.write(f"\n{item}")
-
-
-def remove_item(item_type, language, item_to_remove):
-    """Remove a word or quote from the appropriate file."""
-    dir_path = config.LANGUAGES_DIR if item_type == "words" else config.QUOTES_DIR
-    file_path = os.path.join(dir_path, f"{language}.txt")
-    try:
-        items = load_items(item_type, language)
-        if item_to_remove in items:
-            items.remove(item_to_remove)
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write("\n".join(items))
-            return True
-    except Exception:
-        return False
-    return False

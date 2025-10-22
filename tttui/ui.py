@@ -1,8 +1,20 @@
 import curses
+import math
+
+
+def simple_moving_average(data, window_size):
+    if not data or window_size <= 1:
+        return data
+    smoothed = []
+    for i in range(len(data)):
+        start, end = max(0, i - window_size // 2), min(
+            len(data), i + window_size // 2 + 1
+        )
+        smoothed.append(sum(data[start:end]) / len(data[start:end]))
+    return smoothed
 
 
 def init_colors(theme):
-    """Initialize color pairs based on the selected theme."""
     curses.start_color()
     curses.use_default_colors()
     curses.init_pair(1, theme["text_correct"][0], theme["text_correct"][1])
@@ -12,59 +24,40 @@ def init_colors(theme):
     curses.init_pair(5, theme["menu_highlight"][0], theme["menu_highlight"][1])
     curses.init_pair(6, theme["menu_title"][0], theme["menu_title"][1])
     curses.init_pair(7, 240, -1)
+    curses.init_pair(8, 238, -1)
 
 
-def display_menu(stdscr, title, options, selected_idx, status_bar=""):
+def display_menu(stdscr, title, options, selected_idx):
     h, w = stdscr.getmaxyx()
     stdscr.clear()
     stdscr.addstr(3, (w - len(title)) // 2, title, curses.A_BOLD | curses.color_pair(6))
     for i, option in enumerate(options):
-        y = 6 + i
-        x = (w - len(option)) // 2
+        y, x = 6 + i, (w - len(option)) // 2
         style = curses.color_pair(5) if i == selected_idx else curses.A_NORMAL
         stdscr.addstr(y, x, f"  {option[:w-6]}  ", style)
     help_text = "UP/DOWN: navigate | ENTER: select | TAB: back | Q: quit"
     stdscr.addstr(h - 3, (w - len(help_text)) // 2, help_text)
-    if status_bar:
-        stdscr.addstr(h - 2, (w - len(status_bar)) // 2, status_bar, curses.A_REVERSE)
     stdscr.refresh()
 
 
-def get_user_input(stdscr, prompt):
-    h, w = stdscr.getmaxyx()
-    curses.echo()
-    curses.curs_set(1)
-    win_h, win_w = 3, 42
-    win_y, win_x = (h - win_h) // 2, (w - win_w) // 2
-    input_win = curses.newwin(win_h, win_w, win_y, win_x)
-    input_win.border()
-    input_win.addstr(0, 2, f" {prompt} ")
-    input_win.refresh()
-    edit_win = curses.newwin(1, win_w - 2, win_y + 1, win_x + 1)
-    input_str = edit_win.getstr(0, 0).decode("utf-8")
-    curses.noecho()
-    curses.curs_set(0)
-    return input_str
-
-
 def display_test_ui(stdscr, state):
+    """Displays the test UI without the live stats."""
     h, w = stdscr.getmaxyx()
     stdscr.clear()
     cfg = state["config"]
-    header_parts = [
-        f"Lang: {cfg.get('language', 'english')}",
-        f"Theme: {cfg.get('theme', 'default')}",
-    ]
+
+    mode_str = f"{cfg['mode']}" + (f" {cfg['value']}" if "value" in cfg else "")
+    header_parts = [mode_str, f"lang: {cfg.get('language', 'english')}"]
+
     if cfg["mode"] == "time":
-        header_parts.insert(
-            0, f"Time: {max(0, cfg['value'] - state['time_elapsed']):.1f}s"
+        time_remaining_str = (
+            f"time: {max(0, cfg.get('value', 0) - state['time_elapsed']):.1f}s"
         )
-    elif cfg["mode"] == "words":
-        header_parts.insert(
-            0, f"Words: {state['current_text'].count(' ')}/{cfg['value']}"
-        )
+        header_parts.insert(0, time_remaining_str)
+
     header = " | ".join(header_parts)
-    stdscr.addstr(1, (w - len(header)) // 2, header)
+    stdscr.addstr(1, (w - len(header)) // 2, header, curses.A_DIM)
+
     lines, current_line_idx = state["lines"], state["current_line_idx"]
     display_start, display_end = max(0, current_line_idx - 1), min(
         len(lines), current_line_idx + 2
@@ -89,23 +82,152 @@ def display_test_ui(stdscr, state):
                     else curses.A_NORMAL
                 )
             stdscr.addstr(line_y, start_x + j, char, color)
+
+    command_bar_y = h - 3
+    command_options = state["command_options"]
+    total_bar_width = sum(len(opt) for opt in command_options) + (
+        len(command_options) * 4
+    )
+    command_bar_x = (w - total_bar_width) // 2
+    for i, option in enumerate(command_options):
+        style = curses.A_NORMAL
+        if state["test_focus"] == "command" and i == state["selected_command_idx"]:
+            style = curses.color_pair(5)
+        stdscr.addstr(command_bar_y, command_bar_x, f"  {option}  ", style)
+        command_bar_x += len(option) + 4
     stdscr.refresh()
+
+
+def _draw_wpm_graph(stdscr, y, x, width, height, history, duration):
+    if not history:
+        return
+    smoothing_window = max(1, len(history) // 6)
+    smoothed_history = simple_moving_average(history, smoothing_window)
+    y_axis_width = 4
+    x_axis_height = 1
+    graph_area_width = (width - y_axis_width) * 2
+    graph_area_height = (height - x_axis_height) * 4
+    canvas = [
+        [False for _ in range(graph_area_width)] for _ in range(graph_area_height)
+    ]
+    max_wpm = max(smoothed_history) if smoothed_history else 0
+    y_max = math.ceil(max_wpm / 10.0) * 10 if max_wpm > 0 else 50
+    grid_line_char = "·"
+    grid_line_style = curses.color_pair(8) | curses.A_DIM
+    num_grid_lines = 6
+    for i in range(num_grid_lines + 1):
+        line_y = y + int(i * ((height - x_axis_height - 1) / num_grid_lines))
+        wpm_label = int(y_max * (1 - i / num_grid_lines))
+        stdscr.addstr(line_y, x, f"{wpm_label:<{y_axis_width-1}}")
+        for c in range(width - y_axis_width):
+            if c % 2 == 0:
+                stdscr.addstr(
+                    line_y, x + y_axis_width + c, grid_line_char, grid_line_style
+                )
+    for i in range(graph_area_width - 1):
+        idx1 = int(i * (len(smoothed_history) / graph_area_width))
+        idx2 = int((i + 1) * (len(smoothed_history) / graph_area_width))
+        if idx2 >= len(smoothed_history):
+            idx2 = len(smoothed_history) - 1
+        y1 = (
+            int((smoothed_history[idx1] / y_max) * (graph_area_height - 1))
+            if y_max > 0
+            else 0
+        )
+        y2 = (
+            int((smoothed_history[idx2] / y_max) * (graph_area_height - 1))
+            if y_max > 0
+            else 0
+        )
+        dx, dy = 1, y2 - y1
+        steps = max(abs(dx), abs(dy))
+        steps = 1 if steps == 0 else steps
+        for step in range(steps + 1):
+            px, py = i + int(step * dx / steps), y1 + int(step * dy / steps)
+            if 0 <= py < graph_area_height:
+                canvas[py][px] = True
+    for r in range(height - x_axis_height):
+        for c in range(width - y_axis_width):
+            dots = [canvas[r * 4 + j][c * 2 + k] for j in range(4) for k in range(2)]
+            braille_code = 0x2800
+            dot_map = [0x01, 0x02, 0x04, 0x40, 0x08, 0x10, 0x20, 0x80]
+            for i, dot in enumerate(dots):
+                if dot:
+                    braille_code += dot_map[i]
+            if braille_code != 0x2800:
+                stdscr.addstr(
+                    y + (height - x_axis_height - 1 - r),
+                    x + y_axis_width + c,
+                    chr(braille_code),
+                    curses.color_pair(1),
+                )
+    int_duration = int(duration)
+    end_time_str = f"{int_duration}s"
+    stdscr.addstr(
+        y + height - x_axis_height,
+        x + width - len(end_time_str),
+        end_time_str,
+        curses.A_DIM,
+    )
+    stdscr.addstr(y + height - x_axis_height, x + y_axis_width, "0s", curses.A_DIM)
 
 
 def display_results(stdscr, state):
     h, w = stdscr.getmaxyx()
     stdscr.clear()
-    results = state["results"]
-    title = "Test Complete!"
-    stdscr.addstr(3, (w - len(title)) // 2, title, curses.A_BOLD | curses.color_pair(6))
+    results, cfg = state["results"], state["config"]
+    wpm_str = f"{results['net_wpm']:.2f} WPM"
+    acc_str = f"{results['acc']:.2f}% acc"
     stdscr.addstr(
-        5,
-        (w - 20) // 2,
-        f"WPM:      {results['wpm']:.2f}",
-        curses.color_pair(1) | curses.A_BOLD,
+        1, (w - len(wpm_str)) // 2, wpm_str, curses.color_pair(1) | curses.A_BOLD
     )
-    stdscr.addstr(6, (w - 20) // 2, f"Accuracy: {results['acc']:.2f}%")
-    stdscr.addstr(7, (w - 20) // 2, f"Errors:   {results['errors']}")
+    stdscr.addstr(2, (w - len(acc_str)) // 2, acc_str)
+    y_offset = 4
+    if results["is_new_pb"]:
+        pb_title = "New Personal Best!"
+        stdscr.addstr(
+            y_offset,
+            (w - len(pb_title)) // 2,
+            pb_title,
+            curses.color_pair(1) | curses.A_BOLD,
+        )
+        y_offset += 2
+    box_width = 50
+    box_height = 6
+    box_x = (w - box_width) // 2
+    box_y = y_offset
+    col1_x = box_x + 3
+    col2_x = box_x + 26
+    stdscr.addstr(box_y, box_x, "┌" + "─" * (box_width - 2) + "┐")
+    for i in range(1, box_height - 1):
+        stdscr.addstr(box_y + i, box_x, "│")
+        stdscr.addstr(box_y + i, box_x + box_width - 1, "│")
+    stdscr.addstr(box_y + box_height - 1, box_x, "└" + "─" * (box_width - 2) + "┘")
+    stats_y = box_y + 1
+    test_mode_str = f"{cfg['mode']}" + (f" {cfg['value']}" if cfg.get("value") else "")
+    stdscr.addstr(stats_y, col1_x, f"{'wpm':<12}{results['net_wpm']:.2f}")
+    stdscr.addstr(stats_y, col2_x, f"{'raw':<12}{results['raw_wpm']:.2f}")
+    stdscr.addstr(stats_y + 1, col1_x, f"{'acc':<12}{results['acc']:.2f}%")
+    stdscr.addstr(
+        stats_y + 1, col2_x, f"{'consistency':<12}{results['consistency']:.2f}%"
+    )
+    stdscr.addstr(stats_y + 2, col1_x, f"{'time':<12}{results['time']:.2f}s")
+    stdscr.addstr(stats_y + 2, col2_x, f"{'chars':<12}{results['char_stats']}")
+    stdscr.addstr(stats_y + 3, col1_x, f"{'test':<12}{test_mode_str}")
+    stdscr.addstr(stats_y + 3, col2_x, f"{'language':<12}{cfg['language']}")
+    graph_h = 14
+    graph_w = 70
+    graph_y = box_y + box_height + 1
+    graph_x = (w - graph_w) // 2
+    _draw_wpm_graph(
+        stdscr,
+        graph_y,
+        graph_x,
+        graph_w,
+        graph_h,
+        results["wpm_history"],
+        results["time"],
+    )
     msg = "Press 'Enter' to retry, 'Tab' for menu, 'q' to quit."
-    stdscr.addstr(h - 3, (w - len(msg)) // 2, msg)
+    stdscr.addstr(h - 2, (w - len(msg)) // 2, msg)
     stdscr.refresh()

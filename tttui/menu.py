@@ -8,33 +8,43 @@ class Menu:
         self.app_config = app_config
         self.current_menu = "main"
         self.selected_idx = 0
-        self.management_target = {}
 
     def get_menu_options(self):
+        """Generate menu options, indicating the current selection."""
         languages = storage.get_available_languages()
         themes = list(self.app_config["themes"].keys())
+
+        current_lang = self.app_config["language"]
+        current_theme = self.app_config["theme"]
+
+        lang_options = [
+            f"{lang} [{'*' if lang == current_lang else ' '}]" for lang in languages
+        ]
+        theme_options = [
+            f"{theme} [{'*' if theme == current_theme else ' '}]" for theme in themes
+        ]
+
         return {
-            "main": ["time", "words", "quote", "language", "theme", "manage"],
-            "time": ["15", "30", "60", "back"],
-            "words": ["10", "25", "50", "back"],
-            "language": languages + ["back"],
-            "theme": themes + ["back"],
-            "manage": ["manage languages", "manage quotes", "back"],
-            "manage_languages": ["add language"] + languages + ["back"],
-            "manage_quotes": languages + ["back"],
-            "language_actions": ["add word", "remove word", "back"],
-            "quote_actions": ["add quote", "remove quote", "back"],
+            "main": [
+                "time",
+                "words",
+                "quote",
+                f"language [{current_lang}]",
+                f"theme [{current_theme}]",
+            ],
+            "time": ["15", "30", "60", "120", "back"],
+            "words": ["10", "25", "50", "100", "back"],
+            "language": lang_options + ["back"],
+            "theme": theme_options + ["back"],
         }
 
     def navigate(self):
         menu_options = self.get_menu_options()
-        status_bar = f"Language: {self.app_config['language']} | Theme: {self.app_config['theme']}"
+        title = (
+            "tttui" if self.current_menu == "main" else f"tttui / {self.current_menu}"
+        )
         ui.display_menu(
-            self.stdscr,
-            f"tttui / {self.current_menu}",
-            menu_options[self.current_menu],
-            self.selected_idx,
-            status_bar,
+            self.stdscr, title, menu_options[self.current_menu], self.selected_idx
         )
 
         key = self.stdscr.getch()
@@ -44,39 +54,45 @@ class Menu:
             self.selected_idx = min(
                 len(menu_options[self.current_menu]) - 1, self.selected_idx + 1
             )
-        elif key == ord("\t"):
-            if self.current_menu != "main":
-                self.current_menu = "main"
-                self.selected_idx = 0
+        elif key == ord("\t") and self.current_menu != "main":
+            self.current_menu = "main"
+            self.selected_idx = 0
         elif key == ord("q"):
             return {"action": "quit"}
-        elif key == curses.KEY_ENTER or key == 10:
-            selection = menu_options[self.current_menu][self.selected_idx]
-            return self.handle_selection(selection)
+        elif key in (curses.KEY_ENTER, 10):
+            selection_text = menu_options[self.current_menu][self.selected_idx]
+            return self.handle_selection(selection_text)
         return {"action": "navigate"}
 
-    def handle_selection(self, selection):
+    def handle_selection(self, selection_text):
+        selection = selection_text.split(" ")[0]
+
         if selection == "back":
             self.current_menu = "main"
             self.selected_idx = 0
             return {"action": "navigate"}
 
         if self.current_menu == "main":
-            if selection in ["time", "words", "quote"]:
-                return {"action": "start_test", "mode": selection}
-            else:
+            if selection in ["time", "words", "language", "theme"]:
                 self.current_menu = selection
                 self.selected_idx = 0
+            elif selection == "quote":
+                return {"action": "start_test", "mode": "quote"}
+
+        elif self.current_menu in ["time", "words"]:
+            return {
+                "action": "start_test",
+                "mode": self.current_menu,
+                "value": int(selection),
+            }
 
         elif self.current_menu == "language":
             self.app_config["language"] = selection
-            self.current_menu = "main"
-            self.selected_idx = 0
+            return {"action": "setting_changed"}
 
         elif self.current_menu == "theme":
             self.app_config["theme"] = selection
             ui.init_colors(self.app_config["themes"][selection])
-            self.current_menu = "main"
-            self.selected_idx = 0
+            return {"action": "setting_changed"}
 
         return {"action": "navigate"}

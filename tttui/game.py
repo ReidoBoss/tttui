@@ -1,9 +1,10 @@
 import random
+import statistics
 from . import storage
 
 
 def reset_game(config):
-    """Initializes a new game state."""
+    """Initializes a new game state with performance tracking."""
     language = config.get("language", "english")
     mode = config["mode"]
 
@@ -14,7 +15,7 @@ def reset_game(config):
         items = storage.load_items("words", language)
         random.shuffle(items)
         if mode == "time":
-            target_text = " ".join(items * 3)
+            target_text = " ".join(items * 10)
         else:
             target_text = " ".join(items[: config.get("value", 25)])
 
@@ -41,14 +42,39 @@ def reset_game(config):
         "selected_command_idx": 0,
         "total_typed_chars": 0,
         "errors": 0,
+        "wpm_history": [],
+        "last_wpm_record_time": 0,
     }
 
 
-def calculate_results(state):
-    """Calculates final results."""
+def calculate_results(state, personal_best):
+    """Calculates final results and determines if it's a new PB."""
     time_elapsed = state["time_elapsed"]
-    errors, total_typed = state["errors"], state["total_typed_chars"]
+    errors = state["errors"]
+    total_typed = state["total_typed_chars"]
     correct_chars = total_typed - errors
-    accuracy = (correct_chars / total_typed) * 100 if total_typed > 0 else 0
+
     net_wpm = (correct_chars / 5) / (time_elapsed / 60) if time_elapsed > 0 else 0
-    return {"wpm": net_wpm, "acc": accuracy, "errors": errors}
+    raw_wpm = (total_typed / 5) / (time_elapsed / 60) if time_elapsed > 0 else 0
+    accuracy = (correct_chars / total_typed) * 100 if total_typed > 0 else 0
+    wpm_values = [wpm for time, wpm in state["wpm_history"]]
+    consistency = (
+        (100 - statistics.stdev(wpm_values) / net_wpm * 100)
+        if len(wpm_values) > 1 and net_wpm > 0
+        else 100
+    )
+
+    is_new_pb = not personal_best or net_wpm > personal_best["net_wpm"]
+
+    char_stats = f"{correct_chars}/{errors}/{len(state['target_text']) - len(state['current_text'])}"
+
+    return {
+        "net_wpm": net_wpm,
+        "raw_wpm": raw_wpm,
+        "acc": accuracy,
+        "time": time_elapsed,
+        "consistency": max(0, consistency),
+        "wpm_history": wpm_values,
+        "char_stats": char_stats,
+        "is_new_pb": is_new_pb,
+    }
