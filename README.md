@@ -2,7 +2,8 @@
 
 `T.T. TUI` is a fast, lightweight, and feature-rich typing test application that runs entirely in your terminal. Inspired by the clean aesthetic and core functionality of Monkeytype, `tttui` provides a focused, distraction-free environment to practice your typing skills, track your progress, and compete against your own personal bests.
 
-<img width="1734" height="1260" alt="image" src="https://github.com/user-attachments/assets/826b18e7-017b-41ca-b6f5-431bd307b684" />
+![Screen Recording 2025-10-22 at 2 19 07 PM](https://github.com/user-attachments/assets/dc0e7f5b-8714-49a2-8532-7d934246ff6d)
+
 
 ---
 
