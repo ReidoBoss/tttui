@@ -27,16 +27,109 @@ def init_colors(theme):
     curses.init_pair(8, 238, -1)
 
 
-def display_menu(stdscr, title, options, selected_idx):
+def display_menu(
+    stdscr,
+    title,
+    options,
+    selected_idx,
+    status_bar="",
+    pb_summary="",
+    settings_summary="",
+    descriptions=None,
+):
     h, w = stdscr.getmaxyx()
+
+    # ASCII Art Title
+    ascii_title = [
+        "██████████████████████████████████",
+        "             T.T. TUI             ",
+        "██████████Typing Test TUI█████████",
+    ]
+
+    top_padding = 2
+    option_padding = 2
+    group_divider = "─" * 38
+
+    menu_width = (
+        max(max(len(line) for line in ascii_title), *(len(opt) + 20 for opt in options))
+        + 8
+    )
+    menu_height = (
+        top_padding
+        + len(ascii_title)
+        + 1
+        + option_padding
+        + len(options) * 2
+        + 6  # extra for group dividers, status, PB, settings
+    )
+    x = (w - menu_width) // 2
+    y = (h - menu_height) // 2
+
     stdscr.clear()
-    stdscr.addstr(3, (w - len(title)) // 2, title, curses.A_BOLD | curses.color_pair(6))
+    # Draw box
+    stdscr.addstr(y, x, "┌" + "─" * (menu_width - 2) + "┐", curses.A_BOLD)
+    for i in range(1, menu_height - 1):
+        stdscr.addstr(y + i, x, "│" + " " * (menu_width - 2) + "│")
+    stdscr.addstr(
+        y + menu_height - 1, x, "└" + "─" * (menu_width - 2) + "┘", curses.A_BOLD
+    )
+
+    # ASCII Art Title
+    for idx, line in enumerate(ascii_title):
+        stdscr.addstr(
+            y + top_padding + idx,
+            x + (menu_width - len(line)) // 2,
+            line,
+            curses.A_BOLD | curses.color_pair(6),
+        )
+
+    # Section Divider
+    stdscr.addstr(
+        y + top_padding + len(ascii_title),
+        x + (menu_width - len(group_divider)) // 2,
+        group_divider,
+        curses.A_DIM,
+    )
+
+    # Menu Options (Grouped)
+    opt_base_y = y + top_padding + len(ascii_title) + 2 + option_padding
     for i, option in enumerate(options):
-        y, x = 6 + i, (w - len(option)) // 2
-        style = curses.color_pair(5) if i == selected_idx else curses.A_NORMAL
-        stdscr.addstr(y, x, f"  {option[:w-6]}  ", style)
-    help_text = "UP/DOWN: navigate | ENTER: select | TAB: back | Q: quit"
-    stdscr.addstr(h - 3, (w - len(help_text)) // 2, help_text)
+        opt_y = opt_base_y + i * 2
+        prefix = "▸ " if i == selected_idx else "  "
+        style = (
+            curses.A_BOLD | curses.color_pair(5)
+            if i == selected_idx
+            else curses.A_NORMAL
+        )
+        # Option grouping: settings last two
+        if i == 3 and len(options) > 4:  # divider before language/theme
+            stdscr.addstr(
+                opt_y - 1,
+                x + (menu_width - len(group_divider)) // 2,
+                group_divider,
+                curses.A_DIM,
+            )
+        stdscr.addstr(opt_y, x + 6, prefix + option, style)
+        if descriptions and i < len(descriptions) and descriptions[i]:
+            stdscr.addstr(opt_y + 1, x + 10, descriptions[i], curses.A_DIM)
+
+    # Status & PB Section
+    divider_y = opt_base_y + len(options) * 2 + 1
+    stdscr.addstr(
+        divider_y,
+        x + (menu_width - len(group_divider)) // 2,
+        group_divider,
+        curses.A_DIM,
+    )
+    if pb_summary:
+        stdscr.addstr(divider_y + 1, x + 4, pb_summary, curses.A_BOLD | curses.A_DIM)
+    if settings_summary:
+        stdscr.addstr(divider_y + 2, x + 4, settings_summary, curses.A_DIM)
+
+    # Hint Bar
+    hint = "↑/↓ move   Enter select   Tab back   Q quit"
+    stdscr.addstr(h - 2, (w - len(hint)) // 2, hint, curses.A_DIM)
+
     stdscr.refresh()
 
 
