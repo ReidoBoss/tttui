@@ -65,7 +65,7 @@ def display_menu(
     x = (w - menu_width) // 2
     y = (h - menu_height) // 2
 
-    stdscr.clear()
+    stdscr.erase()
     # Draw box
     stdscr.addstr(y, x, "┌" + "─" * (menu_width - 2) + "┐", curses.A_BOLD)
     for i in range(1, menu_height - 1):
@@ -136,7 +136,7 @@ def display_menu(
 def display_test_ui(stdscr, state):
     """Displays the test UI without the live stats."""
     h, w = stdscr.getmaxyx()
-    stdscr.clear()
+    stdscr.erase()
     cfg = state["config"]
 
     mode_str = f"{cfg['mode']}" + (f" {cfg['value']}" if "value" in cfg else "")
@@ -267,7 +267,7 @@ def _draw_wpm_graph(stdscr, y, x, width, height, history, duration):
 
 def display_results(stdscr, state):
     h, w = stdscr.getmaxyx()
-    stdscr.clear()
+    stdscr.erase()
     results, cfg = state["results"], state["config"]
     wpm_str = f"{results['net_wpm']:.2f} WPM"
     acc_str = f"{results['acc']:.2f}% acc"
