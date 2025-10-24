@@ -52,7 +52,7 @@ After each test, you're presented with a detailed breakdown of your performance 
 First, clone this repository to your local machine.
 
 ```sh
-git clone https://github.com/stsagarino/tttui.git
+git clone https://github.com/reidoboss/tttui.git
 cd tttui
 ```
 
