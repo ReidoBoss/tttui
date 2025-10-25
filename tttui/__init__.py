@@ -110,14 +110,27 @@ def main(stdscr):
                 if key_code == ord("\t"):
                     test_state["test_focus"] = "command"
                 elif key_code in (curses.KEY_BACKSPACE, 127, ord("\b")):
-                    test_state["current_text"] = test_state["current_text"][:-1]
+                    if test_state["current_text"]:
+                        last_char_pos = len(test_state["current_text"]) - 1
+                        test_state["current_text"] = test_state["current_text"][:-1]
+                        if last_char_pos in test_state["extra_chars"]:
+                            del test_state["extra_chars"][last_char_pos]
+
                 elif 32 <= key_code <= 255:
                     char, pos = chr(key_code), len(test_state["current_text"])
                     if pos < len(test_state["target_text"]):
                         test_state["total_typed_chars"] += 1
-                        if char != test_state["target_text"][pos]:
+                        is_space_expected = test_state["target_text"][pos] == " "
+                        is_space_typed = char == " "
+
+                        if is_space_expected and not is_space_typed:
                             test_state["errors"] += 1
-                        test_state["current_text"] += char
+                            test_state["extra_chars"][pos] = char
+                            test_state["current_text"] += " "
+                        else:
+                            if char != test_state["target_text"][pos]:
+                                test_state["errors"] += 1
+                            test_state["current_text"] += char
 
             elif test_state["test_focus"] == "command":
                 if key_code == ord("\t"):

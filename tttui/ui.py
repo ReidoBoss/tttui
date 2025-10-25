@@ -39,7 +39,6 @@ def display_menu(
 ):
     h, w = stdscr.getmaxyx()
 
-    # ASCII Art Title
     ascii_title = [
         "██████████████████████████████████",
         "             T.T. TUI             ",
@@ -55,18 +54,13 @@ def display_menu(
         + 8
     )
     menu_height = (
-        top_padding
-        + len(ascii_title)
-        + 1
-        + option_padding
-        + len(options) * 2
-        + 6  # extra for group dividers, status, PB, settings
+        top_padding + len(ascii_title) + 1 + option_padding + len(options) * 2 + 6
     )
     x = (w - menu_width) // 2
     y = (h - menu_height) // 2
 
     stdscr.erase()
-    # Draw box
+
     stdscr.addstr(y, x, "┌" + "─" * (menu_width - 2) + "┐", curses.A_BOLD)
     for i in range(1, menu_height - 1):
         stdscr.addstr(y + i, x, "│" + " " * (menu_width - 2) + "│")
@@ -74,7 +68,6 @@ def display_menu(
         y + menu_height - 1, x, "└" + "─" * (menu_width - 2) + "┘", curses.A_BOLD
     )
 
-    # ASCII Art Title
     for idx, line in enumerate(ascii_title):
         stdscr.addstr(
             y + top_padding + idx,
@@ -83,7 +76,6 @@ def display_menu(
             curses.A_BOLD | curses.color_pair(6),
         )
 
-    # Section Divider
     stdscr.addstr(
         y + top_padding + len(ascii_title),
         x + (menu_width - len(group_divider)) // 2,
@@ -91,7 +83,6 @@ def display_menu(
         curses.A_DIM,
     )
 
-    # Menu Options (Grouped)
     opt_base_y = y + top_padding + len(ascii_title) + 2 + option_padding
     for i, option in enumerate(options):
         opt_y = opt_base_y + i * 2
@@ -101,8 +92,8 @@ def display_menu(
             if i == selected_idx
             else curses.A_NORMAL
         )
-        # Option grouping: settings last two
-        if i == 3 and len(options) > 4:  # divider before language/theme
+
+        if i == 3 and len(options) > 4:
             stdscr.addstr(
                 opt_y - 1,
                 x + (menu_width - len(group_divider)) // 2,
@@ -113,7 +104,6 @@ def display_menu(
         if descriptions and i < len(descriptions) and descriptions[i]:
             stdscr.addstr(opt_y + 1, x + 10, descriptions[i], curses.A_DIM)
 
-    # Status & PB Section
     divider_y = opt_base_y + len(options) * 2 + 1
     stdscr.addstr(
         divider_y,
@@ -126,7 +116,6 @@ def display_menu(
     if settings_summary:
         stdscr.addstr(divider_y + 2, x + 4, settings_summary, curses.A_DIM)
 
-    # Hint Bar
     hint = "↑/↓ move   Enter select   Tab back   Q quit"
     stdscr.addstr(h - 2, (w - len(hint)) // 2, hint, curses.A_DIM)
 
@@ -138,7 +127,6 @@ def display_test_ui(stdscr, state):
     h, w = stdscr.getmaxyx()
     stdscr.erase()
     cfg = state["config"]
-
     mode_str = f"{cfg['mode']}" + (f" {cfg['value']}" if "value" in cfg else "")
     header_parts = [mode_str, f"lang: {cfg.get('language', 'english')}"]
 
@@ -161,20 +149,28 @@ def display_test_ui(stdscr, state):
         for j, char in enumerate(line):
             abs_char_pos = sum(len(l) + 1 for l in lines[:line_idx_abs]) + j
             color = curses.color_pair(7 if line_idx_abs < current_line_idx else 3)
+            char_to_display = char
+
             if abs_char_pos < len(state["current_text"]):
-                color = curses.color_pair(
-                    1
-                    if state["current_text"][abs_char_pos]
-                    == state["target_text"][abs_char_pos]
-                    else 2
-                )
+
+                if abs_char_pos in state["extra_chars"]:
+
+                    char_to_display = state["extra_chars"][abs_char_pos]
+                    color = curses.color_pair(2)
+                else:
+                    color = curses.color_pair(
+                        1
+                        if state["current_text"][abs_char_pos]
+                        == state["target_text"][abs_char_pos]
+                        else 2
+                    )
             if abs_char_pos == len(state["current_text"]):
                 color = (
                     curses.color_pair(4)
                     if state["test_focus"] == "text"
                     else curses.A_NORMAL
                 )
-            stdscr.addstr(line_y, start_x + j, char, color)
+            stdscr.addstr(line_y, start_x + j, char_to_display, color)
 
     command_bar_y = h - 3
     command_options = state["command_options"]
