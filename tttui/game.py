@@ -43,6 +43,7 @@ def reset_game(config):
         "total_typed_chars": 0,
         "errors": 0,
         "extra_chars": {},
+        "line_char_counts": [len(line) for line in lines],
         "wpm_history": [],
         "last_wpm_record_time": 0,
     }

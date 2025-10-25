@@ -8,7 +8,6 @@ GRAPH_SAMPLE_RATE = 0.25
 def main(stdscr):
     curses.curs_set(0)
     storage.ensure_dirs()
-
     persistent_config = storage.load_config()
     app_config = {
         "language": persistent_config["user_preferences"].get("language", "english"),
@@ -115,6 +114,9 @@ def main(stdscr):
                         test_state["current_text"] = test_state["current_text"][:-1]
                         if last_char_pos in test_state["extra_chars"]:
                             del test_state["extra_chars"][last_char_pos]
+                            test_state["line_char_counts"][
+                                test_state["current_line_idx"]
+                            ] -= 1
 
                 elif 32 <= key_code <= 255:
                     char, pos = chr(key_code), len(test_state["current_text"])
@@ -126,6 +128,9 @@ def main(stdscr):
                         if is_space_expected and not is_space_typed:
                             test_state["errors"] += 1
                             test_state["extra_chars"][pos] = char
+                            test_state["line_char_counts"][
+                                test_state["current_line_idx"]
+                            ] += 1
                             test_state["current_text"] += " "
                         else:
                             if char != test_state["target_text"][pos]:
@@ -140,14 +145,17 @@ def main(stdscr):
                         test_state["selected_command_idx"] = 0
                     else:
                         test_state["selected_command_idx"] = next_idx
+
                 elif key_code == curses.KEY_BTAB:
                     prev_idx = test_state["selected_command_idx"] - 1
                     if prev_idx < 0:
                         test_state["test_focus"] = "text"
                     else:
                         test_state["selected_command_idx"] = prev_idx
+
                 elif key_code == 27:
                     test_state["test_focus"] = "text"
+
                 elif key_code in (curses.KEY_ENTER, 10, 13):
                     command = test_state["command_options"][
                         test_state["selected_command_idx"]

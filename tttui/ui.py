@@ -127,6 +127,7 @@ def display_test_ui(stdscr, state):
     h, w = stdscr.getmaxyx()
     stdscr.erase()
     cfg = state["config"]
+
     mode_str = f"{cfg['mode']}" + (f" {cfg['value']}" if "value" in cfg else "")
     header_parts = [mode_str, f"lang: {cfg.get('language', 'english')}"]
 
@@ -143,34 +144,43 @@ def display_test_ui(stdscr, state):
     display_start, display_end = max(0, current_line_idx - 1), min(
         len(lines), current_line_idx + 2
     )
+
     for i, line in enumerate(lines[display_start:display_end]):
-        line_y, start_x = (h // 2) + (i - 1), (w - len(line)) // 2
         line_idx_abs = display_start + i
+        line_y = (h // 2) + (i - 1)
+        line_len = state["line_char_counts"][line_idx_abs]
+        start_x = (w - line_len) // 2
+        line_offset = 0
+
         for j, char in enumerate(line):
             abs_char_pos = sum(len(l) + 1 for l in lines[:line_idx_abs]) + j
             color = curses.color_pair(7 if line_idx_abs < current_line_idx else 3)
             char_to_display = char
 
             if abs_char_pos < len(state["current_text"]):
-
                 if abs_char_pos in state["extra_chars"]:
-
                     char_to_display = state["extra_chars"][abs_char_pos]
                     color = curses.color_pair(2)
-                else:
-                    color = curses.color_pair(
-                        1
-                        if state["current_text"][abs_char_pos]
-                        == state["target_text"][abs_char_pos]
-                        else 2
+                    stdscr.addstr(
+                        line_y, start_x + j + line_offset, char_to_display, color
                     )
+                    line_offset += 1
+                    char_to_display = " "
+
+                color = curses.color_pair(
+                    1
+                    if state["current_text"][abs_char_pos]
+                    == state["target_text"][abs_char_pos]
+                    else 2
+                )
+
             if abs_char_pos == len(state["current_text"]):
                 color = (
                     curses.color_pair(4)
                     if state["test_focus"] == "text"
                     else curses.A_NORMAL
                 )
-            stdscr.addstr(line_y, start_x + j, char_to_display, color)
+            stdscr.addstr(line_y, start_x + j + line_offset, char_to_display, color)
 
     command_bar_y = h - 3
     command_options = state["command_options"]
