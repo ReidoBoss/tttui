@@ -48,9 +48,9 @@ class Menu:
         )
 
         key = self.stdscr.getch()
-        if key == curses.KEY_UP:
+        if key == curses.KEY_UP or chr(key).lower() == "k":
             self.selected_idx = max(0, self.selected_idx - 1)
-        elif key == curses.KEY_DOWN:
+        elif key == curses.KEY_DOWN or chr(key).lower() == "j":
             self.selected_idx = min(
                 len(menu_options[self.current_menu]) - 1, self.selected_idx + 1
             )
