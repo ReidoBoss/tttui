@@ -88,7 +88,7 @@ Now you can simply open a terminal and type `tttui` to launch the application.
 
 `tttui` is controlled entirely with the keyboard.
 
--   **Menu Navigation:** Use the `UP` and `DOWN` arrow keys to navigate menus and `ENTER` to select.
+-   **Menu Navigation:** Use the `UP` and `DOWN` arrow keys or `K`/`J` (case-insensitive) to navigate menus and `ENTER` to select.
 -   **Go Back:** Press `TAB` to return to the main menu from a sub-menu.
 -   **In-Test Commands:** During a test, press `TAB` to switch focus from the text area to the command bar at the bottom. Use the arrow keys and `ENTER` to `reset` the test or return to the `menu`.
 -   **Quit:** Press `q` from the main menu or the results screen to quit the application.
