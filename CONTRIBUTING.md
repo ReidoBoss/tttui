@@ -11,7 +11,7 @@ Thank you for your interest in contributing to this project!
 - Make sure to use [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/)
 - Make sure to include issue number in your commits
   - bugfix(#3): fix something
-  - feature(#2): add <feature>
+  - feat(#2): add <feature>
 
 ## Enhancing Existing Functions
 
