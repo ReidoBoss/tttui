@@ -31,4 +31,12 @@ THEMES = {
         "menu_highlight": (16, 198),  # Black on Hot Pink
         "menu_title": (226, -1),  # Yellow
     },
+    "catppuccin-mocha": { # https://catppuccin.com/palette/ for reference!
+        "text_correct": (151, -1), # Green
+        "text_incorrect": (211, -1), # red
+        "text_untyped": (60, -1), # Overlay 0
+        "caret": (16, 223), # Crust on Yellow
+        "menu_highlight": (0, 147), # default on Violet 
+        "menu_title": (111, -1), # Blue
+    },
 }
