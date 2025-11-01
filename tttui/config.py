@@ -47,5 +47,12 @@ THEMES = {
         "menu_highlight": (231, 67),
         "menu_title": (110, 67),
     },
-
+    "dracula": { # https://draculatheme.com/spec I forgot to write down the names...
+        "text_correct": (61, -1), # Comment (name of the color)
+        "text_incorrect": (17, 203), # Background (color name) on Red
+        "text_untyped": (231, -1), # White
+        "caret": (16, 212), # Black on Pink
+        "menu_highlight": (61, 141), #  Comment on Purple
+        "menu_title": (61, 141), # ^^
+    },
 }
