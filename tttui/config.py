@@ -2,9 +2,8 @@ import os
 import curses
 
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(PACKAGE_DIR)
-LANGUAGES_DIR = os.path.join(PROJECT_ROOT, "languages")
-QUOTES_DIR = os.path.join(PROJECT_ROOT, "quotes")
+LANGUAGES_DIR = os.path.join(PACKAGE_DIR, "languages")
+QUOTES_DIR = os.path.join(PACKAGE_DIR, "quotes")
 
 THEMES = {
     "default": {
@@ -31,15 +30,15 @@ THEMES = {
         "menu_highlight": (16, 198),  # Black on Hot Pink
         "menu_title": (226, -1),  # Yellow
     },
-    "catppuccin-mocha": { # https://catppuccin.com/palette/ for reference!
-        "text_correct": (151, -1), # Green
-        "text_incorrect": (211, -1), # red
-        "text_untyped": (60, -1), # Overlay 0
-        "caret": (16, 223), # Crust on Yellow
-        "menu_highlight": (0, 147), # default on Violet 
-        "menu_title": (111, -1), # Blue
+    "catppuccin-mocha": {  # https://catppuccin.com/palette/ for reference!
+        "text_correct": (151, -1),  # Green
+        "text_incorrect": (211, -1),  # red
+        "text_untyped": (60, -1),  # Overlay 0
+        "caret": (16, 223),  # Crust on Yellow
+        "menu_highlight": (0, 147),  # default on Violet
+        "menu_title": (111, -1),  # Blue
     },
-        "nord": {
+    "nord": {
         "text_correct": (26, -1),
         "text_incorrect": (33, -1),
         "text_untyped": (69, -1),
@@ -47,12 +46,12 @@ THEMES = {
         "menu_highlight": (231, 67),
         "menu_title": (110, 67),
     },
-    "dracula": { # https://draculatheme.com/spec I forgot to write down the names...
-        "text_correct": (61, -1), # Comment (name of the color)
-        "text_incorrect": (17, 203), # Background (color name) on Red
-        "text_untyped": (231, -1), # White
-        "caret": (16, 212), # Black on Pink
-        "menu_highlight": (61, 141), #  Comment on Purple
-        "menu_title": (61, 141), # ^^
+    "dracula": {  # https://draculatheme.com/spec I forgot to write down the names...
+        "text_correct": (61, -1),  # Comment (name of the color)
+        "text_incorrect": (17, 203),  # Background (color name) on Red
+        "text_untyped": (231, -1),  # White
+        "caret": (16, 212),  # Black on Pink
+        "menu_highlight": (61, 141),  #  Comment on Purple
+        "menu_title": (61, 141),  # ^^
     },
 }
