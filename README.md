@@ -1,55 +1,78 @@
-# T.T. TUI - A Terminal Typing Test
+# tttui: A Terminal Typing Test
 
-`T.T. TUI` is a fast, lightweight, and feature-rich typing test application that runs entirely in your terminal. Inspired by the clean aesthetic and core functionality of Monkeytype, `tttui` provides a focused, distraction-free environment to practice your typing skills, track your progress, and compete against your own personal bests.
+**A fast, lightweight, and feature-rich typing test that runs directly in your terminal.**
 
-![gigif](https://github.com/user-attachments/assets/58cb0964-1311-4c72-aa04-a76eee20173f)
+Inspired by the minimalist design of Monkeytype, `tttui` provides a clean, distraction-free environment to practice your typing, track your progress, and race against your personal bests.
+
+![tttui Showcase GIF](https://github.com/user-attachments/assets/58cb0964-1311-4c72-aa04-a76eee20173f)
 
 ---
 
 ## Features
 
--   **Multiple Test Modes:** Practice with different challenges.
-    -   **Time:** Type as much as you can in a set amount of time (15, 30, 60, 120 seconds).
-    -   **Words:** Complete a specific number of words (10, 25, 50, 100).
-    -   **Quote:** Type out a quote from the collection.
--   **High-Fidelity WPM Graph:** Get a detailed, high-resolution line graph of your WPM over the course of the test, rendered beautifully with Unicode Braille.
--   **Personal Best Tracking:** `tttui` automatically saves your best score for every test combination (mode, duration, and language) and shows you how your current run compares.
--   **Detailed Performance Stats:** The results screen provides a clean, organized breakdown of your performance, including Net WPM, Raw WPM, accuracy, consistency, and character stats.
--   **Customization:**
-    -   **Themes:** Choose from a selection of built-in themes or easily create your own.
-    -   **Languages:** Add new languages and wordlists simply by creating text files.
--   **Persistent Configuration:** Your chosen theme, language, and all your personal bests are saved locally, so your experience is consistent every time you launch the app.
--   **Minimalist UI:** A keyboard-driven, distraction-free interface that keeps you focused on the text.
+- **Multiple Test Modes:**
+  - **Time:** Type for 15, 30, 60, or 120 seconds.
+  - **Words:** Complete 10, 25, 50, or 100 words.
+  - **Quote:** Type out a famous quote.
+- **High-Fidelity WPM Graph:** A detailed, high-resolution WPM graph rendered beautifully with Unicode Braille.
+- **Personal Best Tracking:** Automatically saves and compares your best score for every test configuration.
+- **Detailed Performance Stats:** Get a clean breakdown of your Net WPM, Raw WPM, accuracy, consistency, and character stats.
+- **Customization:**
+  - **Themes:** Choose from built-in themes or easily create your own.
+  - **Languages:** Add new wordlists simply by creating new text files.
+- **Persistent Configuration:** Your theme, language, and personal bests are saved locally for a consistent experience.
+- **Minimalist, Keyboard-Driven UI:** Stay focused on typing with a clean, efficient interface.
 
 ---
 
 ## Showcase
 
-#### The Typing Interface
+<details>
+<summary>Click to see more screenshots</summary>
 
-A clean and focused interface shows only what you need while typing. The text is displayed centrally, with minimal status information at the top.
+#### Typing Interface
 
 https://github.com/user-attachments/assets/7af94392-fe44-4bfa-91f0-76f3f410ca1c
 
-#### The Results Screen
+#### Results Screen
 
-After each test, you're presented with a detailed breakdown of your performance and a beautiful WPM graph. If you set a new record, you'll be celebrated!
+_After each test, you get a detailed breakdown of your performance and a beautiful WPM graph. New records are celebrated!_
+![Results Screen](https://github.com/user-attachments/assets/08469162-aa20-407d-b178-2742f428f0ac)
 
-![Results Screen Mock-up](https://github.com/user-attachments/assets/08469162-aa20-407d-b178-2742f428f0ac)
+</details>
 
 ---
 
 ## Installation
 
-`tttui` is designed to be simple to install and run.
+`tttui` is designed for a simple and fast setup.
 
-#### Prerequisites
+### Recommended Method: PyPI (pip)
 
--   Python 3
+The easiest way to install `tttui` is with `pip`.
+
+```sh
+pip install tttui
+```
+
+Then, run the application:
+
+```sh
+tttui
+```
+
+_(If the command isn't found, you may need to add Python's `bin` directory to your system's `PATH` or run `python -m tttui` instead.)_
+
+```sh
+python -m tttui
+```
+
+<br>
+
+<details>
+<summary><b>Alternative: Manual Installation from GitHub</b></summary>
 
 #### 1. Clone the Repository
-
-First, clone this repository to your local machine.
 
 ```sh
 git clone https://github.com/reidoboss/tttui.git
@@ -58,40 +81,39 @@ cd tttui
 
 #### 2. Make the Script Executable
 
-Give the launch script execute permissions.
-
 ```sh
 chmod +x bin/tttui.sh
 ```
 
-#### 3. Run It!
-
-You can now run the application directly.
+#### 3. Run the Application
 
 ```sh
 ./bin/tttui.sh
 ```
 
-#### 4. (Recommended) Install System-Wide
+#### 4. (Optional) Install System-Wide
 
-For the best experience, move the executable to a directory in your system's `PATH`. This allows you to run `tttui` from any terminal, anywhere on your system.
+To run `tttui` from any directory, move the script to a location in your `PATH`.
 
 ```sh
 sudo mv bin/tttui.sh /usr/local/bin/tttui
 ```
 
-Now you can simply open a terminal and type `tttui` to launch the application.
+Now you can launch the app by just typing `tttui` in your terminal.
+
+</details>
 
 ---
 
 ## Usage
 
-`tttui` is controlled entirely with the keyboard.
+Control `tttui` entirely with your keyboard:
 
--   **Menu Navigation:** Use the `UP` and `DOWN` arrow keys or `K`/`J` (case-insensitive) to navigate menus and `ENTER` to select.
--   **Go Back:** Press `TAB` to return to the main menu from a sub-menu.
--   **In-Test Commands:** During a test, press `TAB` to switch focus from the text area to the command bar at the bottom. Use the arrow keys and `ENTER` to `reset` the test or return to the `menu`.
--   **Quit:** Press `q` from the main menu or the results screen to quit the application.
+- **Navigation:** Use `UP`/`DOWN` arrows or `K`/`J` to move through menus.
+- **Select:** Press `ENTER` to confirm a selection.
+- **Go Back:** Press `TAB` to return to the main menu from any sub-menu.
+- **In-Test Options:** During a test, press `TAB` to access the command bar to **reset** the test or return to the **menu**.
+- **Quit:** Press `q` from the main menu or results screen to exit.
 
 ---
 
@@ -99,10 +121,10 @@ Now you can simply open a terminal and type `tttui` to launch the application.
 
 You can easily add your own themes and languages.
 
-#### Adding a Theme
+### Adding a Theme
 
-1.  Open `tttui/config.py`.
-2.  Add a new dictionary entry to the `THEMES` dictionary. Follow the existing structure. You can use standard color names (`"red"`, `"blue"`, etc.) or 256-color codes (integers `0-255`).
+1.  Open the `tttui/config.py` file.
+2.  Add a new theme dictionary to the `THEMES` object. You can use color names (e.g., `"red"`) or 256-color codes (e.g., `196`). Use `-1` for a transparent background.
 
     ```python
     "my_cool_theme": {
@@ -114,16 +136,15 @@ You can easily add your own themes and languages.
         "menu_title": ("cyan", -1),
     },
     ```
-    *A value of `-1` for the background means it will be transparent.*
 
-3.  Launch `tttui` and select your new theme from the theme menu.
+3.  Launch `tttui` and select your new theme from the **theme** menu.
 
-#### Adding a Language / Wordlist
+### Adding a Language or Wordlist
 
-1.  Find the `tttui` configuration directory on your system. The application will create it automatically on first run at `~/.config/tttui/`.
-2.  Inside that directory, you will find a `languages` folder.
-3.  Simply add a new `.txt` file to this folder (e.g., `german.txt`). The file should contain words separated by newlines.
-4.  The new language will automatically appear in the `language` menu in the app.
+1.  Locate the `tttui` installation directory. Inside, you will find `languages` and `quotes` folders.
+2.  Add a new `.txt` file (e.g., `german.txt`) to the desired folder.
+3.  The file should contain one word per line.
+4.  The new language will automatically appear in the **language** menu in the app.
 
 ---
 
@@ -132,20 +153,22 @@ You can easily add your own themes and languages.
 ```
 tttui/
 ├── bin/
-│   └── tttui.sh          # The main executable launch script.
+│   └── tttui.sh          # Main executable launch script
 ├── tttui/
-│   ├── __init__.py       # Main application loop and state management.
-│   ├── __main__.py       # Entry point for running as a module.
-│   ├── config.py         # Stores default themes and directory paths.
-│   ├── game.py           # Core game logic, state resets, and result calculations.
-│   ├── menu.py           # Handles menu navigation and logic.
-│   ├── storage.py        # Manages loading/saving of configs, PBs, and language files.
-│   └── ui.py             # All rendering logic (menus, test screen, results, graph).
+│   ├── languages/        # Wordlists for different languages
+│   ├── quotes/           # Quote files for quote mode
+│   ├── __init__.py       # Main application loop and state management
+│   ├── __main__.py       # Entry point for `python -m tttui`
+│   ├── config.py         # Default themes and directory paths
+│   ├── game.py           # Core typing test logic and result calculations
+│   ├── menu.py           # Menu navigation and rendering
+│   ├── storage.py        # Handles loading/saving configs and PBs
+│   └── ui.py             # All rendering logic (menus, test screen, results)
 └── README.md
 ```
 
 ---
 
-## License
+## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the **MIT License**.
