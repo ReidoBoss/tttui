@@ -2,6 +2,8 @@
 
 `tttui` is a minimal terminal typing test written in Rust. It keeps the interface compact: choose your settings from the home menu, move to `start`, and type.
 
+<img width="1092" height="614" alt="tttui-rust-rewrite-demo" src="https://github.com/user-attachments/assets/02bf6d52-bdf5-4c65-a80a-7dc5ad69ed8f" />
+
 ## Features
 
 - Time, words, punctuation, numbers, and quote modes
