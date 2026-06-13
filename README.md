@@ -92,6 +92,7 @@ menu = ["tab m"]
 history = ["g"]
 cancel = ["esc"]
 backspace = ["backspace"]
+delete_word = ["ctrl+backspace", "ctrl+h", "ctrl+w", "alt+backspace"]
 ```
 
 Keybindings support multi-key sequences such as `"tab enter"` and modified keys such as `"ctrl+r"`.

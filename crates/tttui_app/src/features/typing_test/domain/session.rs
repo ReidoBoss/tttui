@@ -52,6 +52,17 @@ impl TestSession {
         self.input.pop();
     }
 
+    pub fn delete_word(&mut self) {
+        let mut new_len = self.input.len();
+        while new_len > 0 && self.target.get(new_len - 1) == Some(&' ') {
+            new_len -= 1;
+        }
+        while new_len > 0 && self.target.get(new_len - 1).is_some_and(|c| *c != ' ') {
+            new_len -= 1;
+        }
+        self.input.truncate(new_len);
+    }
+
     pub fn typed_chars(&self) -> usize {
         self.input.len()
     }
@@ -162,6 +173,45 @@ fn consistency(history: &[(Duration, f64)], net_wpm: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn delete_word_is_noop_on_empty_input() {
+        let mut session = TestSession::new(TestMode::Words(2), "english".into(), "cat dog".into());
+        session.delete_word();
+        assert!(session.input.is_empty());
+    }
+
+    #[test]
+    fn delete_word_removes_partial_word() {
+        let mut session = TestSession::new(TestMode::Words(2), "english".into(), "cat dog".into());
+        session.input = vec!['c', 'a', 't', ' ', 'd', 'o'];
+        session.delete_word();
+        assert_eq!(session.input, vec!['c', 'a', 't', ' ']);
+    }
+
+    #[test]
+    fn delete_word_at_word_start_removes_previous_word() {
+        let mut session = TestSession::new(TestMode::Words(2), "english".into(), "cat dog".into());
+        session.input = vec!['c', 'a', 't', ' '];
+        session.delete_word();
+        assert!(session.input.is_empty());
+    }
+
+    #[test]
+    fn delete_word_uses_target_boundaries_for_mistyped_space() {
+        let mut session = TestSession::new(TestMode::Words(2), "english".into(), "cat dog".into());
+        session.input = vec!['c', 'a', 't', 'x', 'd', 'o'];
+        session.delete_word();
+        assert_eq!(session.input, vec!['c', 'a', 't', 'x']);
+    }
+
+    #[test]
+    fn delete_word_clears_single_word() {
+        let mut session = TestSession::new(TestMode::Words(1), "english".into(), "cat".into());
+        session.input = vec!['c', 'a'];
+        session.delete_word();
+        assert!(session.input.is_empty());
+    }
 
     #[test]
     fn computes_accuracy_from_input() {

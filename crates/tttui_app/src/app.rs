@@ -2,10 +2,14 @@ use std::collections::BTreeMap;
 use std::io;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyEventKind};
+use crossterm::event::{
+    self, Event, KeyCode, KeyEvent, KeyEventKind, KeyModifiers, KeyboardEnhancementFlags,
+    PopKeyboardEnhancementFlags, PushKeyboardEnhancementFlags,
+};
 use crossterm::execute;
 use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+    disable_raw_mode, enable_raw_mode, supports_keyboard_enhancement, EnterAlternateScreen,
+    LeaveAlternateScreen,
 };
 use ratatui::backend::CrosstermBackend;
 use ratatui::layout::{Alignment, Constraint, Direction, Layout, Rect};
@@ -42,9 +46,19 @@ pub fn run() -> AppResult<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen)?;
+    let keyboard_enhanced = supports_keyboard_enhancement().unwrap_or(false);
+    if keyboard_enhanced {
+        execute!(
+            stdout,
+            PushKeyboardEnhancementFlags(KeyboardEnhancementFlags::DISAMBIGUATE_ESCAPE_CODES)
+        )?;
+    }
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
     let result = app.run(&mut terminal, &preferences);
+    if keyboard_enhanced {
+        execute!(terminal.backend_mut(), PopKeyboardEnhancementFlags)?;
+    }
     disable_raw_mode()?;
     execute!(terminal.backend_mut(), LeaveAlternateScreen)?;
     terminal.show_cursor()?;
@@ -244,7 +258,7 @@ where
     fn handle_test_key(&mut self, key: KeyEvent) -> AppResult<bool> {
         if let Some(action) =
             self.matcher
-                .push_for_actions(&key, &self.keymap, &["restart", "menu"])
+                .push_for_actions(&key, &self.keymap, &["restart", "menu", "delete_word"])
         {
             match action.as_str() {
                 "restart" => {
@@ -255,6 +269,12 @@ where
                     self.screen = Screen::Home;
                     return Ok(true);
                 }
+                "delete_word" => {
+                    if let Screen::Test(session) = &mut self.screen {
+                        session.delete_word();
+                    }
+                    return Ok(true);
+                }
                 _ => {}
             }
         }
@@ -262,7 +282,11 @@ where
         if let Screen::Test(session) = &mut self.screen {
             match key.code {
                 KeyCode::Backspace => session.backspace(),
-                KeyCode::Char(value) => {
+                KeyCode::Char(value)
+                    if !key
+                        .modifiers
+                        .intersects(KeyModifiers::CONTROL | KeyModifiers::ALT) =>
+                {
                     session.start_if_needed(Instant::now());
                     session.push_char(value);
                 }

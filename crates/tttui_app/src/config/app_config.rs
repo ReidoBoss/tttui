@@ -40,6 +40,15 @@ impl Default for AppConfig {
         keybindings.insert("history".into(), vec!["g".into()]);
         keybindings.insert("cancel".into(), vec!["esc".into()]);
         keybindings.insert("backspace".into(), vec!["backspace".into()]);
+        keybindings.insert(
+            "delete_word".into(),
+            vec![
+                "ctrl+backspace".into(),
+                "ctrl+h".into(),
+                "ctrl+w".into(),
+                "alt+backspace".into(),
+            ],
+        );
 
         Self {
             defaults: Defaults::default(),

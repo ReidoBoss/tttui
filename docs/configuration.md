@@ -55,7 +55,10 @@ menu = ["tab m"]
 history = ["g"]
 cancel = ["esc"]
 backspace = ["backspace"]
+delete_word = ["ctrl+backspace", "ctrl+h", "ctrl+w", "alt+backspace"]
 ```
+
+`ctrl+backspace` is only delivered as such by terminals that support the kitty keyboard protocol (enabled automatically when available). Other terminals report it as `ctrl+h`, which the default bindings also cover.
 
 Supported modes:
 
