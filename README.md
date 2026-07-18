@@ -159,3 +159,15 @@ crates/
 ```
 
 The code follows feature boundaries where they carry real responsibility, without adding empty layers only to satisfy a directory pattern.
+
+## Contributing
+
+Contributions are welcome. Open an issue to discuss a change, or send a pull request. Bug reports, new themes, and language/quote packs are all useful.
+
+## Contributors
+
+Thanks to everyone who has contributed to `tttui`:
+
+<a href="https://github.com/ReidoBoss/tttui/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ReidoBoss/tttui" alt="tttui contributors" />
+</a>
