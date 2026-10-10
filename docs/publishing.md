@@ -18,24 +18,76 @@ After `tttui` is published, users can install the executable globally with:
 cargo install tttui
 ```
 
-## GitHub Actions Release
+## Release workflow
 
-The release workflow in `.github/workflows/release.yml` publishes both crates automatically when a tag matching `v*` is pushed, for example:
+`.github/workflows/release.yml` runs on two triggers:
+
+- pushing a tag matching `v*`
+- a manual `workflow_dispatch` with a `tag` input, which builds and attaches
+  assets to an existing tag without touching crates.io
 
 ```sh
 git tag v0.1.0
 git push origin v0.1.0
+
+# attach assets to an existing tag
+gh workflow run Release -f tag=v0.1.0
 ```
 
-Before using the workflow, create a crates.io API token and add it to the GitHub repository as an Actions secret named:
+Before using the workflow, create a crates.io API token and add it to the GitHub
+repository as an Actions secret named:
 
 ```text
 CARGO_REGISTRY_TOKEN
 ```
 
-The workflow builds Linux, macOS, and Windows release archives, publishes `tttui_core` first, waits for it to become visible on crates.io, then publishes `tttui`. After publishing succeeds, it creates a GitHub Release for the tag and attaches the binary archives.
+### Release artifacts
 
-## Manual Preflight
+The `build-binaries` job builds one archive per target:
+
+| Target | Runner |
+| --- | --- |
+| `x86_64-unknown-linux-gnu` | `ubuntu-22.04` |
+| `aarch64-unknown-linux-gnu` | `ubuntu-24.04-arm` |
+| `x86_64-unknown-linux-musl` | `ubuntu-22.04` with `musl-tools` |
+| `aarch64-apple-darwin` | `macos-14` |
+| `x86_64-apple-darwin` | `macos-14` (cross-built) |
+| `x86_64-pc-windows-msvc` | `windows-latest` |
+
+Each archive is named `tttui-{target}.tar.gz` and contains a single leading
+directory `tttui-{target}/` holding the binary, `LICENSE` and `README.md`. The
+`github-release` job publishes them together with a generated `SHA256SUMS.txt`.
+
+**This layout is a contract.** `cargo-binstall` derives asset names from the
+crate's `repository` field, the full rust target triple and its own default
+templates (`pkg-fmt = tgz`, filename `{name}-{target}`, binary directory
+`{name}-{target}`). Because the archives follow those defaults exactly, no
+`[package.metadata.binstall]` override is needed. Renaming an archive, dropping
+the leading directory or switching to `.zip` or `.tar.xz` breaks `cargo
+binstall`, which then falls back to a third-party build or a source compile
+instead of using the release. The workflow asserts the layout before uploading.
+
+`github-release` needs only `build-binaries`. A crates.io failure must never
+cost the binaries again: on the first three tagged releases every build
+succeeded and every release shipped zero assets, because attaching them was
+gated behind publishing.
+
+### Publishing order and idempotency
+
+The `publish` job is restricted to the upstream repository, so tags pushed to a
+fork never attempt a crates.io write. It runs after the tag/version check,
+format, check and test steps, and then:
+
+- publishes `tttui_core`, waits until the exact version is visible on
+  `index.crates.io`, and only then publishes `tttui`
+- skips any version that is already on the index, so a re-run after a partial
+  failure resumes instead of dying with "version already exists"
+
+The wait polls the exact version, not the crate name. A previous version of this
+job used `cargo search`, which matches as soon as the crate name exists — true
+since the first release — so it never actually waited for the new version.
+
+## Manual preflight
 
 Before publishing, run:
 
@@ -47,8 +99,22 @@ cargo package -p tttui_core
 cargo package -p tttui
 ```
 
-## Local Workflow Testing
+## Self-contained binaries
 
-GitHub Actions run on GitHub; nothing must be installed locally for them to work after you push.
+CI guards the release binary against build-tree paths. Bundled languages and
+quotes are embedded with `include_str!`, so nothing is read from the machine
+that compiled the executable. Resolving bundled content through
+`env!("CARGO_MANIFEST_DIR")` bakes an absolute source path into the binary, and
+the resulting release works only on the build machine: the published v2.0.0
+archive panicked at startup with `index out of bounds` because no languages were
+found. The guard in `.github/workflows/ci.yml` fails the build when that path,
+in the form the host platform bakes, appears in the binary.
+
+## Local workflow testing
+
+GitHub Actions run on GitHub; nothing must be installed locally for them to work
+after you push.
 
 If you want a local approximation, you can install `act` and run workflows against Docker containers. Use it for quick feedback only; the GitHub-hosted run is still the real verification environment.
+
+`actionlint` catches most workflow mistakes faster than a push.
