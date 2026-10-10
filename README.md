@@ -16,16 +16,28 @@
 - Result stats and WPM graph
 - Layout that remains usable at `80x24`
 
-## Runing and Installation
+## Running and Installation
 
-Since this is published to crates.io, install globally with:
+Install a prebuilt binary with [cargo-binstall](https://github.com/cargo-bins/cargo-binstall):
 
 ```sh
-cargo install tttui
-tttui
+cargo binstall tttui
 ```
 
-Run from a source checkout:
+Or download the archive for your platform from the
+[latest release](https://github.com/ReidoBoss/tttui/releases/latest) and put the
+`tttui` binary on your `PATH`. Archives are named after the rust target, for
+example `tttui-x86_64-unknown-linux-gnu.tar.gz`, and every release ships a
+`SHA256SUMS.txt` next to them.
+
+Build from source with cargo:
+
+```sh
+cargo install tttui                    # published crate
+cargo install --path crates/tttui_app  # current checkout
+```
+
+Run from a source checkout without installing:
 
 ```sh
 cargo run --bin tttui
@@ -144,7 +156,9 @@ Add word lists and quote files here:
 ~/.config/tttui/quotes/<language>.txt
 ```
 
-Each file uses one word or quote per line. User files override bundled files with the same name.
+Each file uses one word or quote per line. User files override bundled files with the same name. Bundled
+languages and quotes are compiled into the binary, so a release archive is
+self-contained and needs no files next to it.
 
 ## Workspace
 
