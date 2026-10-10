@@ -25,3 +25,36 @@ jobs:
       - run: cargo fmt --check
       - run: cargo check -p tttui
       - run: cargo test -p tttui
+      - run: cargo build -p tttui
+      - name: Guard the binary against build-tree paths
+        shell: bash
+        env:
+          BINARY: target/debug/tttui
+        run: |
+          set -euo pipefail
+
+          binary=""
+          for candidate in "${BINARY}" "${BINARY}.exe"; do
+            if [ -f "$candidate" ]; then
+              binary="$candidate"
+              break
+            fi
+          done
+          test -n "$binary" || { echo "no binary found for ${BINARY}" >&2; exit 1; }
+          test -s "$binary" || { echo "${binary} is empty" >&2; exit 1; }
+
+          # The check must not be vacuous: source-derived markers are always present.
+          grep -aqF 'tttui_app' "$binary" || { echo "cannot inspect ${binary} for source markers" >&2; exit 1; }
+
+          if command -v cygpath >/dev/null 2>&1; then
+            baked="$(cygpath -w "$PWD")\\crates\\tttui_app"
+          else
+            baked="${PWD}/crates/tttui_app"
+          fi
+
+          if grep -aqF "$baked" "$binary"; then
+            echo "error: ${binary} embeds the build-time source path ${baked}" >&2
+            echo 'embed bundled assets with include_str!/include_bytes! instead of resolving them through env!("CARGO_MANIFEST_DIR")' >&2
+            exit 1
+          fi
+          echo "ok: ${binary} does not embed ${baked}"
