@@ -122,35 +122,79 @@ jobs:
 
   publish:
     name: Publish crates
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') && github.repository == 'ReidoBoss/tttui'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - name: Verify tag matches workspace version
+      - name: Verify the tag matches the packaged version
         run: |
-          version="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -n 1)"
+          set -euo pipefail
+
+          version="$(cargo pkgid -p tttui | sed 's/.*[#@]//')"
           tag="${GITHUB_REF_NAME#v}"
-          test "$tag" = "$version"
+          test "$tag" = "$version" || {
+            echo "tag ${GITHUB_REF_NAME} does not match the packaged version ${version}" >&2
+            exit 1
+          }
       - run: cargo fmt --check
       - run: cargo check -p tttui
       - run: cargo test -p tttui
-      - run: cargo package -p tttui_core
-      - run: cargo publish -p tttui_core
+      - name: Publish crates in dependency order
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-      - name: Wait for tttui_core to become available
         run: |
-          for attempt in {1..20}; do
-            if cargo search tttui_core --limit 1 | grep -q '^tttui_core = '; then
-              exit 0
+          set -euo pipefail
+
+          # crates.io sparse index path for a crate name.
+          index_path() {
+            local crate="$1"
+            case "${#crate}" in
+              1) printf '1/%s' "$crate" ;;
+              2) printf '2/%s' "$crate" ;;
+              3) printf '3/%s/%s' "${crate:0:1}" "$crate" ;;
+              *) printf '%s/%s/%s' "${crate:0:2}" "${crate:2:2}" "$crate" ;;
+            esac
+          }
+
+          index_has_version() {
+            local crate="$1" version="$2" index needle
+            needle="\"vers\":\"${version}\""
+            index="$(curl -fsS "https://index.crates.io/$(index_path "$crate")" 2>/dev/null || true)"
+            [[ "$index" == *"$needle"* ]]
+          }
+
+          # The index lags behind a fresh publish; wait for the exact version
+          # instead of for the crate name, which exists since the first release.
+          wait_for_version() {
+            local crate="$1" version="$2"
+            for _ in $(seq 1 40); do
+              if index_has_version "$crate" "$version"; then
+                echo "${crate} ${version} is on the index"
+                return 0
+              fi
+              sleep 15
+            done
+            echo "${crate} ${version} did not reach index.crates.io in time" >&2
+            return 1
+          }
+
+          # Re-running a release must not fail on an already published version.
+          publish() {
+            local crate="$1" version
+            version="$(cargo pkgid -p "$crate" | sed 's/.*[#@]//')"
+
+            if index_has_version "$crate" "$version"; then
+              echo "${crate} ${version} is already published; skipping"
+              return 0
             fi
-            sleep 15
-          done
-          echo "tttui_core did not become visible on crates.io in time" >&2
-          exit 1
-      - run: cargo package -p tttui
-      - run: cargo publish -p tttui
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+            cargo package -p "$crate"
+            cargo publish -p "$crate"
+            wait_for_version "$crate" "$version"
+          }
+
+          publish tttui_core
+          publish tttui
+
