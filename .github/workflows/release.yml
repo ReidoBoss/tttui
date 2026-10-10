@@ -112,7 +112,7 @@ jobs:
           set -euo pipefail
 
           cd release-assets
-          sha256sum *.tar.gz > SHA256SUMS.txt
+          sha256sum -- *.tar.gz > SHA256SUMS.txt
           cat SHA256SUMS.txt
       - uses: softprops/action-gh-release@v2
         with:
