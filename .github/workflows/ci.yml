@@ -43,8 +43,21 @@ jobs:
           test -n "$binary" || { echo "no binary found for ${BINARY}" >&2; exit 1; }
           test -s "$binary" || { echo "${binary} is empty" >&2; exit 1; }
 
+          # Debug and symbol metadata can legitimately record the build tree path.
+          # The defect this guard looks for lives in read-only data, which stripping
+          # keeps, so checking a stripped copy avoids that false positive.
+          checked="$binary"
+          if command -v strip >/dev/null 2>&1; then
+            stripped="$(mktemp)"
+            cp "$binary" "$stripped"
+            if strip "$stripped" >/dev/null 2>&1; then
+              checked="$stripped"
+            fi
+          fi
+          echo "checking ${checked} (from ${binary})"
+
           # The check must not be vacuous: source-derived markers are always present.
-          grep -aqF 'tttui_app' "$binary" || { echo "cannot inspect ${binary} for source markers" >&2; exit 1; }
+          grep -aqF 'tttui_app' "$checked" || { echo "cannot inspect ${checked} for source markers" >&2; exit 1; }
 
           if command -v cygpath >/dev/null 2>&1; then
             baked="$(cygpath -w "$PWD")\\crates\\tttui_app"
@@ -52,7 +65,7 @@ jobs:
             baked="${PWD}/crates/tttui_app"
           fi
 
-          if grep -aqF "$baked" "$binary"; then
+          if grep -aqF "$baked" "$checked"; then
             echo "error: ${binary} embeds the build-time source path ${baked}" >&2
             echo 'embed bundled assets with include_str!/include_bytes! instead of resolving them through env!("CARGO_MANIFEST_DIR")' >&2
             exit 1

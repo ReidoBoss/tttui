@@ -24,7 +24,8 @@ cargo install tttui
 
 - pushing a tag matching `v*`
 - a manual `workflow_dispatch` with a `tag` input, which builds and attaches
-  assets to an existing tag without touching crates.io
+  assets to an existing tag without touching crates.io. Dispatching again for a
+  tag that already has a release rebuilds it and overwrites the assets.
 
 ```sh
 git tag v0.1.0
@@ -74,9 +75,11 @@ gated behind publishing.
 
 ### Publishing order and idempotency
 
-The `publish` job is restricted to the upstream repository, so tags pushed to a
-fork never attempt a crates.io write. It runs after the tag/version check,
-format, check and test steps, and then:
+The `publish` job runs only for `push` events on a tag, and only in the upstream
+repository: tags pushed to a fork never attempt a crates.io write, and a manual
+dispatch never publishes even when it is dispatched against a tag ref, because
+`workflow_dispatch` sets `github.ref` to that ref. It runs after the tag/version
+check, format, check and test steps, and then:
 
 - publishes `tttui_core`, waits until the exact version is visible on
   `index.crates.io`, and only then publishes `tttui`
@@ -108,7 +111,9 @@ that compiled the executable. Resolving bundled content through
 the resulting release works only on the build machine: the published v2.0.0
 archive panicked at startup with `index out of bounds` because no languages were
 found. The guard in `.github/workflows/ci.yml` fails the build when that path,
-in the form the host platform bakes, appears in the binary.
+in the form the host platform bakes, appears in the binary. It checks a stripped
+copy: debug and symbol metadata can legitimately carry the same path, while the
+defect lives in read-only data, which stripping keeps intact.
 
 ## Local workflow testing
 
